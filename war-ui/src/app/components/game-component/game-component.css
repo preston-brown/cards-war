@@ -1,5 +1,102 @@
+.game-area {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
+  gap: 2rem;
+}
+
+.deck-area {
+  text-align: center;
+}
+
+.deck-area h2 {
+  margin: 0;
+}
+
+.deck-area p {
+  margin: 0;
+}
+
+.deck-stack {
+  width: 5rem;
+  height: 7rem;
+  margin: 0.5rem auto;
+  border: 2px solid #222;
+  border-radius: 0.5rem;
+  background:
+    repeating-linear-gradient(
+      45deg,
+      rgb(255 255 255 / 8%),
+      rgb(255 255 255 / 8%) 8px,
+      rgb(0 0 0 / 4%) 8px,
+      rgb(0 0 0 / 4%) 16px
+    ),
+    linear-gradient(135deg, #1d4ed8, #0f172a);
+  box-shadow:
+    3px 3px 0 #222,
+    6px 6px 0 rgb(34 34 34 / 35%);
+}
+
 .card-row {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.battle-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding-top: 2.2rem;
+}
+
+.war-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.war-player-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.played-card {
+  position: relative;
+}
+
+.score-animation {
+  position: absolute;
+  top: -1.5rem;
+  left: 50%;
+  color: green;
+  font-size: 1.5rem;
+  font-weight: bold;
+  transform: translateX(-50%);
+  animation: score-pop 900ms ease-out forwards;
+}
+
+@keyframes score-pop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 0) scale(0.7);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -1.5rem) scale(1);
+  }
+}
+
+@media (max-width: 700px) {
+  .game-area {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .card-row {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    justify-content: center;
+  }
 }

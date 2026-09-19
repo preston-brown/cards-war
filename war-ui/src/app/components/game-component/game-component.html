@@ -1,26 +1,78 @@
 @if (!player1.empty() && !player2.empty()) {
-<button (click)="flipCards()">Next Round</button>
-<p></p>
+  <button (click)="nextRound()" [disabled]="!nextRoundEnabled()">Next Round</button>
+  <p></p>
 } @else {
-<p>Game over!</p>
+  <p>Game over!</p>
 }
 
-@if (card1 && card2) {
-<div class="card-row">
-  <app-card-component
-    [suit]="card1.suit"
-    [rank]="card1.rank"
-    [faceUp]="card1FaceUp">
-  </app-card-component>
-  <app-card-component
-    [suit]="card2.suit"
-    [rank]="card2.rank"
-    [faceUp]="card2FaceUp">
-  </app-card-component>
+<div class="game-area">
+  <section class="deck-area">
+    <h2>Player 1</h2>
+    <div class="deck-stack" aria-label="Player 1 deck"></div>
+    <p>{{ player1.size() }} cards remaining</p>
+  </section>
+
+  @if (card1 && card2) {
+    <div class="battle-area">
+      <div class="card-row">
+        <div class="played-card">
+          <app-card-component [suit]="card1.suit" [rank]="card1.rank" [faceUp]="card1FaceUp">
+          </app-card-component>
+          @if (winner() === 1) {
+            <span class="score-animation">+{{ cardsWon() }}</span>
+          }
+        </div>
+        <div class="played-card">
+          <app-card-component [suit]="card2.suit" [rank]="card2.rank" [faceUp]="card2FaceUp">
+          </app-card-component>
+          @if (winner() === 2) {
+            <span class="score-animation">+{{ cardsWon() }}</span>
+          }
+        </div>
+      </div>
+
+      @if (warCard1Down || warCard2Down || warCard1Up || warCard2Up) {
+        <div class="war-row">
+          <div class="war-player-cards">
+            @if (warCard1Down) {
+              <app-card-component
+                [suit]="warCard1Down.suit"
+                [rank]="warCard1Down.rank"
+                [faceUp]="warCard1DownFaceUp">
+              </app-card-component>
+            }
+            @if (warCard1Up) {
+              <app-card-component
+                [suit]="warCard1Up.suit"
+                [rank]="warCard1Up.rank"
+                [faceUp]="warCard1UpFaceUp">
+              </app-card-component>
+            }
+          </div>
+          <div class="war-player-cards">
+            @if (warCard2Down) {
+              <app-card-component
+                [suit]="warCard2Down.suit"
+                [rank]="warCard2Down.rank"
+                [faceUp]="warCard2DownFaceUp">
+              </app-card-component>
+            }
+            @if (warCard2Up) {
+              <app-card-component
+                [suit]="warCard2Up.suit"
+                [rank]="warCard2Up.rank"
+                [faceUp]="warCard2UpFaceUp">
+              </app-card-component>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <section class="deck-area">
+    <h2>Player 2</h2>
+    <div class="deck-stack" aria-label="Player 2 deck"></div>
+    <p>{{ player2.size() }} cards remaining</p>
+  </section>
 </div>
-}
-
-@if (player1 && player2) {
-<p>Player 1 has {{ player1.size() }} cards left.</p>
-<p>Player 2 has {{ player2.size() }} cards left.</p>   
-}
