@@ -1,0 +1,75 @@
+.black-suit {
+  color: black;
+}
+
+.red-suit {
+  color: red;
+}
+
+:host {
+  display: inline-block;
+  perspective: 1000px;
+  vertical-align: middle;
+}
+
+.card {
+  position: relative;
+  width: 5rem;
+  height: 7rem;
+  margin: 0.5rem;
+  transform-style: preserve-3d;
+  transition: transform 0.45s ease;
+  transform-origin: center;
+}
+
+.card--face-up {
+  transform: rotateY(180deg);
+}
+
+.card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+.card-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #222;
+  border-radius: 0.5rem;
+  box-shadow: 2px 3px 6px rgb(0 0 0 / 25%);
+  backface-visibility: hidden;
+  line-height: 1;
+}
+
+.card-front {
+  background: white;
+  color: black;
+  font-size: 2rem;
+  font-weight: bold;
+  transform: rotateY(180deg);
+}
+
+.rank-value,
+.suit-value {
+  display: block;
+}
+
+.card-back {
+  background:
+    radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.25) 0 8%, transparent 9%),
+    radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.2) 0 8%, transparent 9%),
+    repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.08),
+      rgba(255, 255, 255, 0.08) 8px,
+      rgba(0, 0, 0, 0.04) 8px,
+      rgba(0, 0, 0, 0.04) 16px
+    ),
+    linear-gradient(135deg, #1d4ed8, #0f172a);
+  color: white;
+}

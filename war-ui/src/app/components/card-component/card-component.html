@@ -1,0 +1,12 @@
+@if (faceUp) {
+  <div class="card card--face-up">
+    <div class="card-face card-front" [class]="colorClass">
+      <span class="rank-value">{{ rankSymbol }}</span>
+      <span class="suit-value">{{ suitSymbol }}</span>
+    </div>
+  </div>
+} @else {
+  <div class="card">
+    <div class="card-face card-back" aria-label="Face down card"></div>
+  </div>
+}
