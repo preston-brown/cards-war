@@ -1,20 +1,131 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnDestroy, signal } from '@angular/core';
 
-import { CardComponent } from '../card-component/card-component';
+import { Card } from '../../models/card'
 import { Rank } from '../../models/rank'
 import { Player } from '../../models/player'
-import { Card } from '../../models/card'
-import { Deck } from '../../models/deck'
+import { shuffle } from '../../models/card'
 import { Suit } from '../../models/suit'
+import { BattleComponent } from '../battle-component/battle-component';
 
 @Component({
-  imports: [CardComponent],
+  imports: [BattleComponent],
   selector: 'app-game-component',
   styleUrl: './game-component.css',
   templateUrl: './game-component.html',
 })
-export class GameComponent {
-  rankOrder: Rank[] = [
+export class GameComponent implements OnDestroy {
+  player1: Player;
+  player2: Player;
+  player1Cards: (Card | null)[] = [];
+  player2Cards: (Card | null)[] = [];
+  desiredCardCount = 1;
+  winnerMessage = signal<string | null>(null);
+  winnerMessageType = signal<'winner' | 'war'>('winner');
+  private winnerMessageTimer: ReturnType<typeof setTimeout> | undefined;
+
+  constructor() {
+    const cards = [];
+    for (const suit of Object.values(Suit)) {
+      for (const rank of Object.values(Rank)) {
+        cards.push({ suit, rank });
+      }
+    }
+    const shuffledCards = shuffle(cards);
+    const half = Math.floor(shuffledCards.length / 2);
+    const cards1 = shuffledCards.slice(0, half);
+    const cards2 = shuffledCards.slice(half);
+    cards1.push({ suit: Suit.HEARTS, rank: Rank.ACE });
+    cards2.push({ suit: Suit.SPADES, rank: Rank.ACE });
+    this.player1 = new Player('Player 1', cards1);
+    this.player2 = new Player('Player 2', cards2);
+  }
+
+  ngOnDestroy(): void {
+    if (this.winnerMessageTimer !== undefined) {
+      clearTimeout(this.winnerMessageTimer);
+    }
+  }
+
+  drawPlayer1Card(): void {
+    if (this.player1Cards.length >= this.desiredCardCount) {
+      return;
+    }
+    const card = this.player1.nextCard();
+    this.player1Cards = [...this.player1Cards, card];
+    this.foo();
+  }
+
+  drawPlayer2Card(): void {
+    if (this.player2Cards.length >= this.desiredCardCount) {
+      return;
+    }
+    const card = this.player2.nextCard();
+    this.player2Cards = [...this.player2Cards, card];
+    this.foo();
+  }
+
+  private foo(): void {
+    if (this.player1Cards.length === this.desiredCardCount && this.player2Cards.length === this.desiredCardCount) {
+      const card1 = this.player1Cards[this.desiredCardCount - 1];
+      const card2 = this.player2Cards[this.desiredCardCount - 1];
+      const winner = this.calculateWinner(card1, card2);
+      if (winner === null) {
+        this.showWarMessage();
+        this.desiredCardCount += 2;
+      } else {
+        this.showWinnerMessage(`Player ${winner} wins the battle!`);
+        const cards = [...this.player1Cards, ...this.player2Cards]
+          .filter((card): card is Card => card !== null);
+        if (winner === 1) {
+          this.player1.addCards(cards);
+        } else {
+          this.player2.addCards(cards);
+        }
+
+        this.player1Cards = [];
+        this.player2Cards = [];
+        this.desiredCardCount = 1;
+      }
+    }
+  }
+
+  private showWarMessage(): void {
+    this.showWinnerMessage('War!', 'war');
+  }
+
+  private showWinnerMessage(message: string, type: 'winner' | 'war' = 'winner'): void {
+    if (this.winnerMessageTimer !== undefined) {
+      clearTimeout(this.winnerMessageTimer);
+    }
+
+    this.winnerMessage.set(null);
+    this.winnerMessageType.set(type);
+    this.winnerMessageTimer = setTimeout(() => {
+      this.winnerMessage.set(message);
+      this.winnerMessageTimer = undefined;
+    }, 0);
+  }
+
+  private calculateWinner(card1: Card | null, card2: Card | null): 1 | 2 | null {
+    if (card1 === null && card2 === null) {
+      return null;
+    } else if (card1 === null) {
+      return 2;
+    } else if (card2 === null) {
+      return 1;
+    }
+    const rank1 = this.rankOrder.indexOf(card1.rank);
+    const rank2 = this.rankOrder.indexOf(card2.rank);
+    if (rank1 > rank2) {
+      return 1;
+    } else if (rank2 > rank1) {
+      return 2;
+    } else {
+      return null;
+    }
+  }
+
+  private readonly rankOrder: Rank[] = [
     Rank.TWO,
     Rank.THREE,
     Rank.FOUR,
@@ -29,151 +140,4 @@ export class GameComponent {
     Rank.KING,
     Rank.ACE,
   ];
-
-  player1: Player;
-  player2: Player;
-  card1: Card| null = null;
-  card2: Card | null = null;
-  card1FaceUp = signal(false);
-  card2FaceUp = signal(false);
-  warCard1Down: Card | null = null;
-  warCard2Down: Card | null = null;
-  warCard1Up: Card | null = null;
-  warCard2Up: Card | null = null;
-  warCard1DownFaceUp = signal(false);
-  warCard2DownFaceUp = signal(false);
-  warCard1UpFaceUp = signal(false);
-  warCard2UpFaceUp = signal(false);
-  nextRoundEnabled = signal(true);
-  winner = signal<1 | 2 | 'tie' | null>(null);
-  cardsWon = signal(0);
-  private winnerTimeout?: ReturnType<typeof setTimeout>;
-  firstRound: boolean = true;
-
-  constructor() {
-    const deck = new Deck();
-    for (const suit of Object.values(Suit)) {
-      for (const rank of Object.values(Rank)) {
-        deck.addCard({ suit, rank });
-      }
-    }
-    deck.shuffle();
-    this.player1 = new Player('Player 1');
-    this.player2 = new Player('Player 2');
-    while (!deck.empty()) {
-      this.player1.addWin(deck.pop());
-      this.player2.addWin(deck.pop());
-    }
-    this.player1.restart();
-    this.player2.restart();
-  }
-
-  nextRound(): void {
-    if (this.player1.outOfCards() || this.player2.outOfCards()) {
-      return;
-    }
-    clearTimeout(this.winnerTimeout);
-    this.nextRoundEnabled.set(false);
-    this.winner.set(null);
-    this.cardsWon.set(0);
-    this.warCard1Down = null;
-    this.warCard2Down = null;
-    this.warCard1Up = null;
-    this.warCard2Up = null;
-    this.warCard1DownFaceUp.set(false);
-    this.warCard2DownFaceUp.set(false);
-    this.warCard1UpFaceUp.set(false);
-    this.warCard2UpFaceUp.set(false);
-    let playedCard1 = null;
-    let playedCard2 = null;
-    if (this.firstRound) {
-      this.firstRound = false;
-      playedCard1 = { rank: Rank.EIGHT, suit: Suit.HEARTS };
-      playedCard2 = { rank: Rank.EIGHT, suit: Suit.CLUBS };
-    } else {
-      playedCard1 = this.player1.nextCard();
-      playedCard2 = this.player2.nextCard();
-    }
-    this.card1 = playedCard1;
-    this.card2 = playedCard2;
-    this.card1FaceUp.set(false);
-    this.card2FaceUp.set(false);
-
-    setTimeout(() => {
-      this.card1FaceUp.set(true);
-    }, 750);
-
-    setTimeout(() => {
-      this.card2FaceUp.set(true);
-    }, 1500);
-
-    setTimeout(() => {
-      const result = this.compareCards(playedCard1, playedCard2);
-      if (result === 0) {
-        setTimeout(() => {
-          this.startWar(playedCard1, playedCard2);
-        }, 750);
-      } else {
-        this.finishRound(result, [playedCard1, playedCard2]);
-      }
-    }, 2000);
-  }
-
-  private startWar(card1: Card, card2: Card): void {
-    //if (!this.player1.canPlay(2) || !this.player2.canPlay(2)) {
-    //  this.finishRound(0, [card1, card2]);
-    //  return;
-    //}
-
-    this.warCard1Down = this.player1.nextCard();
-
-    setTimeout(() => {
-      this.warCard2Down = this.player2.nextCard();
-    }, 500);
-
-    setTimeout(() => {
-      this.warCard1Up = this.player1.nextCard();
-    }, 1000);
-
-    setTimeout(() => {
-      this.warCard2Up = this.player2.nextCard();
-    }, 1500);
-
-    setTimeout(() => {
-      this.warCard1UpFaceUp.set(true);
-      this.warCard2UpFaceUp.set(true);
-    }, 2250);
-
-    setTimeout(() => {
-      const result = this.compareCards(this.warCard1Up!, this.warCard2Up!);
-      this.finishRound(result, [
-        card1,
-        card2,
-        this.warCard1Down!,
-        this.warCard2Down!,
-        this.warCard1Up!,
-        this.warCard2Up!,
-      ]);
-    }, 3000);
-  }
-
-  private finishRound(result: number, cards: Card[]): void {
-    this.winner.set(result > 0 ? 1 : result < 0 ? 2 : 'tie');
-    this.cardsWon.set(result === 0 ? 0 : cards.length);
-    if (result > 0) {
-      this.player1.addWin(cards);
-    } else if (result < 0) {
-      this.player2.addWin(cards);
-    }
-    this.nextRoundEnabled.set(true);
-    this.winnerTimeout = setTimeout(() => {
-      this.winner.set(null);
-    }, 1000);
-  }
-
-  private compareCards(card1: Card, card2: Card): number {
-    const rank1Index = this.rankOrder.indexOf(card1.rank);
-    const rank2Index = this.rankOrder.indexOf(card2.rank);
-    return rank1Index - rank2Index;
-  }
 }

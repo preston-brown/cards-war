@@ -1,0 +1,22 @@
+.battle {
+	text-align: center;
+	padding-top: 1.5rem;
+}
+
+.battle h2,
+.player-battle-cards h3 {
+	margin: 0;
+}
+
+.battle-cards {
+	display: flex;
+	justify-content: center;
+	gap: 2rem;
+}
+
+.player-battle-cards {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.25rem;
+}

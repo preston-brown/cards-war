@@ -1,39 +1,37 @@
-import { Card } from "./card"
-import { Deck } from "./deck"
+import { Card, shuffle } from "./card"
 
 export class Player {
   private name: string;
-  private deck: Deck;
-  private won: Deck;
+  private deck: Card[];
+  private won: Card[];
 
-  constructor(name: string) {
+  constructor(name: string, cards: Card[] = []) {
     this.name = name;
-    this.deck = new Deck();
-    this.won = new Deck();
+    this.deck = [...cards];
+    this.won = [];
   }
 
-  addWin(spoils: Card | Card[]): void {
-    if (Array.isArray(spoils)) {
-      this.won.addCards(spoils);
-    } else {
-      this.won.addCard(spoils);
+  addCards(cards: Card[]): void {
+    this.won.push(...cards);
+  }
+
+  getName(): string {
+    return this.name;
+  }
+
+  nextCard(): Card | null {
+    if (this.deck.length === 0) {
+      this.deck = shuffle([...this.won]);
+      this.won = [];
     }
-  }
-
-  nextCard(): Card {
-    return this.deck.pop();
-  }
-
-  size(): number {
-    return this.deck.size() + this.won.size();
+    return this.deck.pop() || null;
   }
 
   outOfCards(): boolean {
-    return this.deck.size() == 0 && this.won.size() == 0;
+    return this.deck.length === 0 && this.won.length === 0;
   }
 
-  restart(): void {
-    this.deck.addCards(this.won.popAll());
-    this.deck.shuffle();
+  cardCount(): number {
+    return this.deck.length + this.won.length;
   }
 }

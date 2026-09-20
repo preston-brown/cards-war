@@ -1,4 +1,4 @@
-import { Component, Input, Signal } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { Suit } from '../../models/suit'
 import { Rank } from '../../models/rank'
 
@@ -12,7 +12,7 @@ export class CardComponent {
 
   @Input({ required: true }) suit!: Suit;
   @Input({ required: true }) rank!: Rank;
-  @Input({ required: true }) faceUp!: Signal<boolean>;
+  @Input({ required: true }) faceUp!: boolean;
 
   get suitSymbol(): string {
     switch (this.suit) {
