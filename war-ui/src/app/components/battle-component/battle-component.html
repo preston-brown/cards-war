@@ -1,27 +1,19 @@
 <section class="battle">
-	<div class="battle-cards">
-		<div class="player-battle-cards">
-			@for (card of player1Cards(); track $index) {
-				@if (card; as currentCard) {
-					<app-card-component
-						[suit]="currentCard.suit"
-						[rank]="currentCard.rank"
-						[faceUp]="true">
-					</app-card-component>
-				}
-			}
-		</div>
+  <div class="battle-cards">
+    <div class="player-battle-cards">
+      @for (card of player1Cards(); track $index) {
+        @if (card; as currentCard) {
+          <app-card-component [card]="currentCard"> </app-card-component>
+        }
+      }
+    </div>
 
-		<div class="player-battle-cards">
-			@for (card of player2Cards(); track $index) {
-				@if (card; as currentCard) {
-					<app-card-component
-						[suit]="currentCard.suit"
-						[rank]="currentCard.rank"
-						[faceUp]="true">
-					</app-card-component>
-				}
-			}
-		</div>
-	</div>
+    <div class="player-battle-cards">
+      @for (card of player2Cards(); track $index) {
+        @if (card; as currentCard) {
+          <app-card-component [card]="currentCard"> </app-card-component>
+        }
+      }
+    </div>
+  </div>
 </section>

@@ -6,6 +6,12 @@ export interface Card {
   rank: Rank;
 }
 
+export interface FlippableCard {
+  suit: Suit;
+  rank: Rank;
+  faceUp: boolean;
+}
+
 export function shuffle<T>(items: T[]): T[] {
   const copy = [...items];
   for (let i = copy.length - 1; i > 0; i--) {

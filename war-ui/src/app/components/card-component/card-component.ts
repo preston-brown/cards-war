@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
-import { Suit } from '../../models/suit'
-import { Rank } from '../../models/rank'
+import { Suit } from '../../models/suit';
+import { Rank } from '../../models/rank';
+import { FlippableCard } from '../../models/card';
 
 @Component({
   imports: [],
@@ -9,28 +10,25 @@ import { Rank } from '../../models/rank'
   templateUrl: './card-component.html',
 })
 export class CardComponent {
-
-  @Input({ required: true }) suit!: Suit;
-  @Input({ required: true }) rank!: Rank;
-  @Input({ required: true }) faceUp!: boolean;
+  @Input({ required: true }) card!: FlippableCard;
 
   get suitSymbol(): string {
-    switch (this.suit) {
+    switch (this.card.suit) {
       case Suit.CLUBS:
-        return '\u2663';
+        return '♣';
       case Suit.DIAMONDS:
-        return '\u2666';
+        return '♦';
       case Suit.HEARTS:
-        return '\u2665';
+        return '♥';
       case Suit.SPADES:
-        return '\u2660';
+        return '♠';
       default:
-        throw new Error(`Unknown suit: ${this.suit}`);
+        throw new Error(`Unknown suit: ${this.card.suit}`);
     }
   }
 
   get colorClass(): string {
-    switch (this.suit) {
+    switch (this.card.suit) {
       case Suit.CLUBS:
       case Suit.SPADES:
         return 'black-suit';
@@ -38,12 +36,12 @@ export class CardComponent {
       case Suit.HEARTS:
         return 'red-suit';
       default:
-        throw new Error(`Unknown suit: ${this.suit}`);
+        throw new Error(`Unknown suit: ${this.card.suit}`);
     }
   }
 
   get rankSymbol(): string {
-    switch (this.rank) {
+    switch (this.card.rank) {
       case Rank.TWO:
         return '2';
       case Rank.THREE:
@@ -71,9 +69,7 @@ export class CardComponent {
       case Rank.ACE:
         return 'A';
       default:
-        throw new Error(`Unknown rank: ${this.rank}`);
+        throw new Error(`Unknown rank: ${this.card.rank}`);
     }
   }
-
 }
-

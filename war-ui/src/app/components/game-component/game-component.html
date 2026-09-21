@@ -1,34 +1,31 @@
 @if (!player1.outOfCards() && !player2.outOfCards()) {
-<p></p>
+  <p></p>
 } @else {
-<p>Game over!</p>
+  <p>Game over!</p>
 }
 
 <div class="game-area">
-    <section class="deck-area">
-        <h2>{{ player1.getName() }}</h2>
-        <div class="deck-stack" aria-label="Player 1 deck" (dblclick)="drawPlayer1Card()">
-        </div>
-        <p>{{ player1.cardCount() }} cards</p>
-    </section>
+  <section class="deck-area">
+    <h2>{{ player1.getName() }}</h2>
+    <div class="deck-stack" aria-label="Player 1 deck" (dblclick)="drawPlayer1Card()"></div>
+    <p>{{ player1.cardCount() }} cards</p>
+  </section>
 
-    <section class="battle-slot">
-        @if (winnerMessage(); as message) {
-        <div
-            class="winner-message"
-            [class.war-message]="winnerMessageType() === 'war'"
-            role="status">
-            {{ message }}
-        </div>
-        }
-        <app-battle-component [player1Cards]="player1Cards" [player2Cards]="player2Cards">
-        </app-battle-component>
-    </section>
+  <section class="battle-slot">
+    @if (battleMessage(); as message) {
+      <div class="winner-message" [class.war-message]="battleMessageType() === 'war'" role="status">
+        {{ message }}
+      </div>
+    }
+    <app-battle-component
+      [player1Cards]="player1Cards()"
+      [player2Cards]="player2Cards()"
+    ></app-battle-component>
+  </section>
 
-    <section class="deck-area">
-        <h2>{{ player2.getName() }}</h2>
-        <div class="deck-stack" aria-label="Player 2 deck" (dblclick)="drawPlayer2Card()">
-        </div>
-        <p>{{ player2.cardCount() }} cards</p>
-    </section>
+  <section class="deck-area">
+    <h2>{{ player2.getName() }}</h2>
+    <div class="deck-stack" aria-label="Player 2 deck" (dblclick)="drawPlayer2Card()"></div>
+    <p>{{ player2.cardCount() }} cards</p>
+  </section>
 </div>

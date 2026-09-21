@@ -1,10 +1,10 @@
-import { Component, OnDestroy, signal } from '@angular/core';
+import { Component, OnDestroy, signal, Signal, WritableSignal } from '@angular/core';
 
-import { Card } from '../../models/card'
-import { Rank } from '../../models/rank'
-import { Player } from '../../models/player'
-import { shuffle } from '../../models/card'
-import { Suit } from '../../models/suit'
+import { Card, FlippableCard } from '../../models/card';
+import { Rank } from '../../models/rank';
+import { Player } from '../../models/player';
+import { shuffle } from '../../models/card';
+import { Suit } from '../../models/suit';
 import { BattleComponent } from '../battle-component/battle-component';
 
 @Component({
@@ -16,12 +16,13 @@ import { BattleComponent } from '../battle-component/battle-component';
 export class GameComponent implements OnDestroy {
   player1: Player;
   player2: Player;
-  player1Cards: (Card | null)[] = [];
-  player2Cards: (Card | null)[] = [];
-  desiredCardCount = 1;
-  winnerMessage = signal<string | null>(null);
-  winnerMessageType = signal<'winner' | 'war'>('winner');
-  private winnerMessageTimer: ReturnType<typeof setTimeout> | undefined;
+  player1Cards = signal<(FlippableCard | null)[]>([]);
+  player2Cards = signal<(FlippableCard | null)[]>([]);
+  battleMessage = signal<string | null>(null);
+  battleMessageType = signal<'winner' | 'war'>('winner');
+
+  private desiredCardCount = 1;
+  private battleMessageTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor() {
     const cards = [];
@@ -41,68 +42,101 @@ export class GameComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.winnerMessageTimer !== undefined) {
-      clearTimeout(this.winnerMessageTimer);
+    if (this.battleMessageTimer !== undefined) {
+      clearTimeout(this.battleMessageTimer);
     }
   }
 
   drawPlayer1Card(): void {
-    if (this.player1Cards.length >= this.desiredCardCount) {
-      return;
-    }
-    const card = this.player1.nextCard();
-    this.player1Cards = [...this.player1Cards, card];
-    this.foo();
+    this.drawPlayerCard(this.player1, this.player1Cards);
   }
 
   drawPlayer2Card(): void {
-    if (this.player2Cards.length >= this.desiredCardCount) {
+    this.drawPlayerCard(this.player2, this.player2Cards);
+  }
+
+  private drawPlayerCard(player: Player, cards: WritableSignal<(FlippableCard | null)[]>): void {
+    if (cards().length >= this.desiredCardCount) {
       return;
     }
-    const card = this.player2.nextCard();
-    this.player2Cards = [...this.player2Cards, card];
-    this.foo();
-  }
-
-  private foo(): void {
-    if (this.player1Cards.length === this.desiredCardCount && this.player2Cards.length === this.desiredCardCount) {
-      const card1 = this.player1Cards[this.desiredCardCount - 1];
-      const card2 = this.player2Cards[this.desiredCardCount - 1];
-      const winner = this.calculateWinner(card1, card2);
-      if (winner === null) {
-        this.showWarMessage();
-        this.desiredCardCount += 2;
-      } else {
-        this.showWinnerMessage(`Player ${winner} wins the battle!`);
-        const cards = [...this.player1Cards, ...this.player2Cards]
-          .filter((card): card is Card => card !== null);
-        if (winner === 1) {
-          this.player1.addCards(cards);
-        } else {
-          this.player2.addCards(cards);
-        }
-
-        this.player1Cards = [];
-        this.player2Cards = [];
-        this.desiredCardCount = 1;
-      }
+    const card = player.nextCard();
+    if (card) {
+      cards.set([...cards(), { ...card, faceUp: false }]);
+    } else {
+      cards.set([...cards(), null]);
+    }
+    if (
+      this.player1Cards().length === this.desiredCardCount &&
+      this.player2Cards().length === this.desiredCardCount
+    ) {
+      this.resolveBattle();
     }
   }
 
-  private showWarMessage(): void {
-    this.showWinnerMessage('War!', 'war');
+  private async resolveBattle(): Promise<void> {
+    await this.pause(300);
+    this.flipLastCard(this.player1Cards);
+    await this.pause(300);
+    this.flipLastCard(this.player2Cards);
+    await this.pause(300);
+    const card1 = this.player1Cards().at(-1) || null;
+    const card2 = this.player2Cards().at(-1) || null;
+    const winner = this.calculateWinner(card1, card2);
+    if (winner === null) {
+      await this.pause(300);
+      this.showBattleMessage('War!', 'war');
+      this.desiredCardCount += 2;
+    } else {
+      this.handleWinner(winner);
+    }
   }
 
-  private showWinnerMessage(message: string, type: 'winner' | 'war' = 'winner'): void {
-    if (this.winnerMessageTimer !== undefined) {
-      clearTimeout(this.winnerMessageTimer);
+  private async handleWinner(winner: 1 | 2) {
+    await this.pause(300);
+    this.showBattleMessage(`Player ${winner} wins the battle!`, 'winner');
+    await this.pause(1000);
+    this.flipAllCards(this.player1Cards);
+    this.flipAllCards(this.player2Cards);
+    await this.pause(1000);
+    const cards = [...this.player1Cards(), ...this.player2Cards()].filter(
+      (card): card is FlippableCard => card !== null,
+    );
+    if (winner === 1) {
+      this.player1.addWinnings(cards);
+    } else {
+      this.player2.addWinnings(cards);
+    }
+    this.player1Cards.set([]);
+    this.player2Cards.set([]);
+    this.desiredCardCount = 1;
+  }
+
+  private flipAllCards(cards: WritableSignal<(FlippableCard | null)[]>): void {
+    cards.set(cards().map((card) => (card ? { ...card, faceUp: true } : null)));
+  }
+
+  private flipLastCard(cards: WritableSignal<(FlippableCard | null)[]>): void {
+    const currentCards = cards();
+    if (currentCards.length === 0) {
+      return;
+    }
+    const lastIndex = currentCards.length - 1;
+    const newCards = currentCards.map((card, index) =>
+      card && index === lastIndex ? { ...card, faceUp: true } : card,
+    );
+    cards.set(newCards);
+  }
+
+  private showBattleMessage(message: string, type: 'winner' | 'war'): void {
+    if (this.battleMessageTimer !== undefined) {
+      clearTimeout(this.battleMessageTimer);
     }
 
-    this.winnerMessage.set(null);
-    this.winnerMessageType.set(type);
-    this.winnerMessageTimer = setTimeout(() => {
-      this.winnerMessage.set(message);
-      this.winnerMessageTimer = undefined;
+    this.battleMessage.set(null);
+    this.battleMessageTimer = setTimeout(() => {
+      this.battleMessageType.set(type);
+      this.battleMessage.set(message);
+      this.battleMessageTimer = undefined;
     }, 0);
   }
 
@@ -123,6 +157,12 @@ export class GameComponent implements OnDestroy {
     } else {
       return null;
     }
+  }
+
+  private pause(milliseconds: number): Promise<void> {
+    return new Promise((resolve) => {
+      setTimeout(resolve, milliseconds);
+    });
   }
 
   private readonly rankOrder: Rank[] = [
